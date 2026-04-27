@@ -3,7 +3,6 @@ param(
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
 $CurrentVersion = 9.2
-
 # ===========================================================
 #  SAVANI IT CLEANUP V9.1 FINAL - Production Ready
 #  100 chi nhanh ban hang - Offline Ready
@@ -29,7 +28,7 @@ $mutex = New-Object System.Threading.Mutex($false, $mutexName)
 if (-not $mutex.WaitOne(0, $false)) { exit }
 
 $scriptStartTime = [DateTime]::Now
-$timeoutMinutes  = 10  # TEst Thu
+$timeoutMinutes  = 10  # Giam tu 25 xuong 10 phut de bao ve gio lam viec
 
 # -- HAM TIEN ICH (DI CHUYEN LEN TRUOC) ----------------------
 
@@ -60,31 +59,50 @@ function Get-FolderSize {
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Add-Type -AssemblyName Microsoft.VisualBasic
+    # =========================================================
     # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
     # =========================================================
-    $UpdateUrl = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/Savani_AutoCleanup.ps1" 
-
+    $UpdateUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2RhaXBoYW0yMDAxL1NWTl9jbGVhbnVwL21haW4vU2F2YW5pQ2xlYW51cF92OS5wczE="))
+    
     try {
-        if (Test-Connection -ComputerName 8.8.8.8 -Count 1 -Quiet -ErrorAction SilentlyContinue) {
-            $remoteScript = Invoke-RestMethod -Uri $UpdateUrl -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
-            if ($remoteScript -match '\$CurrentVersion\s*=\s*([0-9\.]+)') {
-                $remoteVersion = [double]$matches[1]
-                if ($remoteVersion -gt $CurrentVersion) {
-                    Write-Log "AUTO-UPDATE: Phat hien phien ban moi (V$remoteVersion). Dang cap nhat..."
-                    $scriptPath = $PSCommandPath 
-                    $remoteScript | Out-File -FilePath $scriptPath -Encoding utf8 -Force
-                    Write-Log "AUTO-UPDATE: Cap nhat thanh cong. Dang khoi dong lai kich ban..."
-                    
-                    if ($null -ne $mutex) { try { $mutex.ReleaseMutex() } catch { } $mutex.Dispose() }
-                    
-                    Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -NonInteractive -File `"$scriptPath`""
-                    exit
+        Write-Log "AUTO-UPDATE: Bat dau kiem tra phien ban moi..."
+        
+        $cacheBuster = [guid]::NewGuid().ToString()
+        $fetchUrl = "$($UpdateUrl.Trim())?t=$cacheBuster"
+
+        # Đâm thẳng vào tải code. Nếu rớt mạng tự nó nhảy xuống catch, không cần test mạng!
+        $resp = Invoke-WebRequest -Uri $fetchUrl -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        $remoteScript = $resp.Content
+
+        if ($remoteScript -match '(?im)^\s*\$CurrentVersion\s*=\s*["'']?([0-9]+(\.[0-9]+)*)') {
+            $remoteVersion = [double]$matches[1]
+
+            if ($remoteVersion -gt $CurrentVersion) {
+                Write-Log "AUTO-UPDATE: Co ban moi V$remoteVersion (Hien tai: V$CurrentVersion). Dang cap nhat..."
+
+                # Fix triệt để vụ file tàng hình của Task Scheduler
+                $scriptPath = $PSCommandPath
+                if ([string]::IsNullOrEmpty($scriptPath)) { 
+                    $scriptPath = "C:\IT_Scripts\SavaniCleanup_v9.ps1" 
                 }
+
+                $remoteScript | Out-File -FilePath $scriptPath -Encoding utf8 -Force
+                Write-Log "AUTO-UPDATE: Ghi de thanh cong. Dang reboot kich ban..."
+
+                if ($null -ne $mutex) { try { $mutex.ReleaseMutex() } catch { } $mutex.Dispose() }
+
+                Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -NonInteractive -File `"$scriptPath`""
+                exit
+            } else {
+                Write-Log "AUTO-UPDATE: Dang dung ban moi nhat (V$CurrentVersion)."
             }
+        } else {
+            Write-Log "AUTO-UPDATE: Khong tim thay bien CurrentVersion tren GitHub" "WARN"
         }
     } catch {
-        Write-Log "AUTO-UPDATE Loi check update: $($_.Exception.Message)" "WARN"
+        Write-Log "AUTO-UPDATE Bo qua (Loi mang/Link): $($_.Exception.Message)" "WARN"
     }
+    # =========================================================
     # =========================================================
 
     # -- 2. DOC CONFIG ----------------------------------------
