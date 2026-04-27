@@ -48,4 +48,4 @@ Mỗi khi có tính năng mới, Quản trị viên chỉ cần:
 * **V9.0:** Triển khai cơ chế Mutex, Telegram Report và Aggressive Mode.
 
 ---
-**Savani Operations - Tự động hóa để bứt phá**
+**Savani Operations 
