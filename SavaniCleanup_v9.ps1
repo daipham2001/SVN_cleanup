@@ -28,7 +28,7 @@ $mutex = New-Object System.Threading.Mutex($false, $mutexName)
 if (-not $mutex.WaitOne(0, $false)) { exit }
 
 $scriptStartTime = [DateTime]::Now
-$timeoutMinutes  = 10  # Giam tu 25 xuong 10 phut de bao ve gio lam viec
+$timeoutMinutes  = 10  # TEst Thu
 
 # -- HAM TIEN ICH (DI CHUYEN LEN TRUOC) ----------------------
 
@@ -59,6 +59,33 @@ function Get-FolderSize {
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Add-Type -AssemblyName Microsoft.VisualBasic
+    # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
+    # =========================================================
+    $CurrentVersion = 9.2
+    $UpdateUrl = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/Savani_AutoCleanup.ps1" 
+
+    try {
+        if (Test-Connection -ComputerName 8.8.8.8 -Count 1 -Quiet -ErrorAction SilentlyContinue) {
+            $remoteScript = Invoke-RestMethod -Uri $UpdateUrl -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+            if ($remoteScript -match '\$CurrentVersion\s*=\s*([0-9\.]+)') {
+                $remoteVersion = [double]$matches[1]
+                if ($remoteVersion -gt $CurrentVersion) {
+                    Write-Log "AUTO-UPDATE: Phat hien phien ban moi (V$remoteVersion). Dang cap nhat..."
+                    $scriptPath = $PSCommandPath 
+                    $remoteScript | Out-File -FilePath $scriptPath -Encoding utf8 -Force
+                    Write-Log "AUTO-UPDATE: Cap nhat thanh cong. Dang khoi dong lai kich ban..."
+                    
+                    if ($null -ne $mutex) { try { $mutex.ReleaseMutex() } catch { } $mutex.Dispose() }
+                    
+                    Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -NonInteractive -File `"$scriptPath`""
+                    exit
+                }
+            }
+        }
+    } catch {
+        Write-Log "AUTO-UPDATE Loi check update: $($_.Exception.Message)" "WARN"
+    }
+    # =========================================================
 
     # -- 2. DOC CONFIG ----------------------------------------
     if (-not (Test-Path $ConfigPath -ErrorAction SilentlyContinue)) { exit }
