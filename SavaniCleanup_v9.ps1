@@ -2,6 +2,7 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
+$CurrentVersion = 9.2
 
 # ===========================================================
 #  SAVANI IT CLEANUP V9.1 FINAL - Production Ready
@@ -61,7 +62,6 @@ try {
     Add-Type -AssemblyName Microsoft.VisualBasic
     # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
     # =========================================================
-    $CurrentVersion = 9.2
     $UpdateUrl = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/Savani_AutoCleanup.ps1" 
 
     try {
