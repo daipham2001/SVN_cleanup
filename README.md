@@ -5,7 +5,7 @@ Công cụ dọn rác ngầm cho các máy POS tại chi nhánh. Chạy rất nh
 ## 🚀 Chức năng chính
 
 * **Dọn rác:** Tự động xóa file rác Zalo (ảnh/video/cache cũ), thư mục Temp và thư mục Downloads.
-* **Tránh treo máy:** Tự động bỏ qua nếu nhân viên đang mở app bán hàng (KiotViet, Nhanh) hoặc Excel.
+* **Tránh treo máy:** Tự động tắt neesy chạy quá lâu
 * **Cứu hộ ổ C:** Tự động dọn mạnh tay hơn (xóa nhiều file hơn) nếu phát hiện ổ C sắp đầy.
 * **Báo cáo Telegram:** Dọn xong tự động bắn tin nhắn báo cáo về group IT.
 * **Tự động cập nhật:** Có code mới trên mạng là máy POS tự tải về, anh em IT không cần UltraViewer xuống từng máy.
