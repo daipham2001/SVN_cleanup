@@ -2,7 +2,7 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 9.2
+$CurrentVersion = 10
 # ===========================================================
 #  SAVANI IT CLEANUP V9.1 FINAL - Production Ready
 #  100 chi nhanh ban hang - Offline Ready
@@ -247,7 +247,7 @@ try {
     if ($freeGBBefore -gt $config.Threshold.MinFreeGBToRun) { exit }
 
     Write-Log "========================================="
-    Write-Log "SAVANI CLEANUP V9.1 - START"
+    Write-Log "SAVANI CLEANUP V$CurrentVersion - START"
     Write-Log "O C: $freeGBBefore GB / $totalGB GB"
     if ($aggressiveMode) {
         Write-Log "MODE: AGGRESSIVE" "WARN"
@@ -434,7 +434,7 @@ try {
     if ($global:skippedCount -gt 0) { $extraTag += "`nBo qua: $($global:skippedCount) file loi (xem log)." }
     if ($aggressiveMode)            { $extraTag += "`nAGGRESSIVE MODE - O C can, nguong xoa manh hon." }
 
-    $msg = "SAVANI IT CLEANUP - $($env:COMPUTERNAME)`n" +
+    $msg = "🚀 SAVANI CLEANUP V$CurrentVersion - $($env:COMPUTERNAME)`n" +
            "------------------------`n" +
            "Trang thai : $globalStatus$extraTag`n" +
            "Tong don   : $totMB MB`n" +
