@@ -1,64 +1,54 @@
-# SAVANI IT - AUTOMATED POS CLEANUP SYSTEM (V9.x)
+# SAVANI IT - Script Dọn Rác Tự Động
 
-Hệ thống dọn dẹp và tối ưu hóa máy tính POS tự động cho 100+ chi nhánh Savani. 
-Giải pháp "Zero-Agent" giúp quản lý tập trung và tự động hóa bảo trì mà không tốn tài nguyên hệ thống.
+Công cụ dọn rác ngầm cho các máy POS tại chi nhánh. Chạy rất nhẹ, tự động cập nhật và báo cáo qua Telegram.
 
-## 🚀 Tính năng nổi bật
+## 🚀 Chức năng chính
 
-* **Dọn dẹp thông minh (Smart Cleanup):** Tự động xử lý rác Zalo (Media, Cache), Windows Temp, User Temp và Downloads.
-* **Cơ chế "Nhường đường" (App-Aware):** Tự động phát hiện và tránh xung đột khi nhân viên đang sử dụng phần mềm bán hàng (KiotViet, Nhanh, Excel...).
-* **Chế độ Cấp cứu (Aggressive Mode):** Tự động chuyển sang ngưỡng xóa mạnh hơn khi ổ C: báo động đỏ.
-* **Bảo mật & Báo cáo (Secure Reporting):** Gửi báo cáo qua Telegram sau mỗi lần dọn. Token được mã hóa chuẩn AES-256 nội bộ.
-* **Tự động cập nhật (Zero-Agent Auto Update):** Nhận diện phiên bản mới trên GitHub, tự động tải về và nâng cấp ngầm không cần UltraViewer.
-* **Tối ưu máy POS cũ:** Tự động giãn cách thời gian xóa (delay) để không gây nghẽn CPU/Disk I/O.
+* **Dọn rác:** Tự động xóa file rác Zalo (ảnh/video/cache cũ), thư mục Temp và thư mục Downloads.
+* **Tránh treo máy:** Tự động bỏ qua nếu nhân viên đang mở app bán hàng (KiotViet, Nhanh) hoặc Excel.
+* **Cứu hộ ổ C:** Tự động dọn mạnh tay hơn (xóa nhiều file hơn) nếu phát hiện ổ C sắp đầy.
+* **Báo cáo Telegram:** Dọn xong tự động bắn tin nhắn báo cáo về group IT.
+* **Tự động cập nhật:** Có code mới trên mạng là máy POS tự tải về, anh em IT không cần UltraViewer xuống từng máy.
 
-## 📂 Cấu trúc thư mục (C:\IT_Scripts)
+## 📂 Thư mục chứa File (`C:\IT_Scripts`)
 
-| File | Chức năng |
+| File | Tác dụng |
 | :--- | :--- |
-| `Savani_AutoCleanup.ps1` | Kịch bản dọn dẹp chính (Chạy bởi Task Scheduler). |
-| `cleanup_config.json` | File cấu hình (Thông số dọn dẹp). |
-| `Cleanup_Log.txt` | Nhật ký hoạt động tại ổ cứng (Local Log). |
-| `.tg_token.enc` | Token Telegram đã mã hóa. |
+| `Savani_AutoCleanup.ps1` | Kịch bản chạy chính. |
+| `cleanup_config.json` | File cấu hình (chỉnh ngày, dung lượng...). |
+| `Cleanup_Log.txt` | File log ghi lại lịch sử dọn rác. |
+| `.tg_token.enc` | File chứa mã Token Telegram đã được bảo mật. |
 
-## ⚙️ Giải nghĩa Cấu hình (cleanup_config.json)
+## ⚙️ Hướng dẫn file Config (`cleanup_config.json`)
 
-File cấu hình là "bộ não" của kịch bản, cho phép điều chỉnh linh hoạt theo từng máy mà không cần can thiệp vào code:
+Chỉ cần sửa số ở file này để thay đổi cách dọn rác, không cần sửa code:
 
-* **`Options` (Tùy chọn hoạt động):**
-  * `DryRun`: Đặt `true` để chạy chế độ MÔ PHỎNG (Chỉ ghi log, không xóa file thật). Đặt `false` để chạy THỰC CHIẾN.
-* **`Threshold` (Ngưỡng kích hoạt thông minh):**
-  * `MinFreeGBToRun` (VD: 50): Nếu ổ C: trống nhiều hơn mức này (50GB), script tự động dừng để tiết kiệm tài nguyên.
-  * `AggressiveFreeGB` (VD: 10): Nếu ổ C: trống dưới mức này (10GB), kích hoạt chế độ **Aggressive Mode**. Tự động giảm thời gian giữ file xuống 1/3 để giải phóng dung lượng khẩn cấp.
-* **`Days` (Tuổi thọ file tối đa):**
-  * `Temp`: File tạm (Temp hệ thống/User) sinh ra trước số ngày này sẽ bị xóa.
-  * `Downloads`: File tải xuống nằm trong mục Downloads quá số ngày này sẽ bị xóa.
-* **`ExcludeUsers` (Vùng cấm địa):**
-  * Danh sách các User Profile trên Windows tuyệt đối không quét (VD: `Administrator`, `Public`).
-* **`Paths` & `JunkFolders` (Bản đồ săn rác Zalo):**
-  * Khai báo chính xác các thư mục chứa rác nặng của Zalo PC (như `picture`, `video`, `ZaloDownloads`). Tuyệt đối an toàn cho CSDL tin nhắn.
-* **`SafeExtensions` (Lệnh bài miễn tử):**
-  * Khi quét thư mục Downloads, các file có đuôi thuộc danh sách này (VD: `.pdf`, `.xls`, `.docx`) sẽ **được giữ lại**, tránh xóa nhầm dữ liệu làm việc của thu ngân.
-* **`Telegram` (Cấu hình Báo cáo):**
-  * `Enabled`: Bật/Tắt gửi tin nhắn báo cáo về điện thoại.
-  * `ChatID`: Địa chỉ ID nhóm hoặc cá nhân trên Telegram để nhận bot report.
+* **`DryRun`**: Để `true` là chạy thử (chỉ quét, không xóa), để `false` là chạy xóa thật.
+* **`MinFreeGBToRun`** (VD: 50): Ổ C trống trên 50GB thì máy đang ngon, bỏ qua không dọn nữa.
+* **`AggressiveFreeGB`** (VD: 10): Ổ C trống dưới 10GB thì kích hoạt chế độ "Cấp cứu" (Giảm số ngày giữ file xuống để cứu ổ cứng ngay lập tức).
+* **`Days`**: Số ngày giữ lại file cũ trong mục Temp và Downloads. Quá ngày là bị xóa.
+* **`ExcludeUsers`**: Các tài khoản Windows tuyệt đối không quét rác (VD: Administrator).
+* **`JunkFolders`**: Chỗ khai báo rác Zalo. Lưu ý: Tool chỉ xóa cache, media cũ, tuyệt đối không làm mất tin nhắn.
+* **`SafeExtensions`**: File tải về có các đuôi này (như `.pdf`, `.xls`, `.docx`...) sẽ ĐƯỢC GIỮ LẠI, không bị xóa.
+* **`Telegram`**: Bật/tắt gửi tin nhắn và điền ID nhóm chat.
 
-## 🛠 Hướng dẫn cài đặt (Dành cho IT Support)
+## 🛠 Cách cài đặt lần đầu (Dành cho Helpdesk)
 
-1. Tải gói cài đặt gồm file `.bat` và các file cấu hình.
-2. Chuột phải vào file `.bat` cài đặt -> **Run as Administrator**.
-3. Nhập Bot Token Telegram khi CMD yêu cầu.
-4. Đảm bảo Task Scheduler đã được tạo Task `SavaniITCleanup` (OnLogon - Delay 2 phút).
+1. Copy gói cài đặt vào máy POS chi nhánh.
+2. Chuột phải vào file cài đặt `.bat` -> Chọn **Run as Administrator**.
+3. Dán mã Token Telegram vào màn hình đen khi được hỏi.
+4. Xong! Tool sẽ tự tạo Task Scheduler chạy ngầm 2 phút sau khi thu ngân mở máy.
 
-## 🔄 Quy trình cập nhật Code (Dành cho Quản trị viên)
+## 🔄 Cách Update bản mới (Dành cho Admin)
 
-Mỗi khi muốn nâng cấp tính năng cho hệ thống 100+ máy:
-1. Sửa code trong file script trên repository GitHub này.
-2. Tăng số biến `$CurrentVersion` (ví dụ từ `9.1` lên `9.2`).
-3. Bấm **Commit changes**. Máy POS sẽ tự động cập nhật trong lần chạy tiếp theo.
+Khi cần sửa code hoặc thêm tính năng cho 100+ máy:
+1. Mở file `SavaniCleanup_v9.ps1` trên GitHub này để sửa code.
+2. Sửa tăng con số ở dòng `$CurrentVersion` (VD: từ `9.1` lên `9.2`).
+3. Lưu lại (Commit changes).
+4. Các máy POS sẽ tự động tải bản mới về chạy ở lần tiếp theo.
 
-## 📝 Nhật ký phiên bản (Changelog)
+## 📝 Lịch sử cập nhật
 
-* **V10:** Tích hợp hiển thị Version động trên Telegram. Sửa lỗi đường dẫn Auto-Update.
-* **V9.1:** Thêm module Auto-Update, mã hóa Base64 URL và cơ chế Bypass Cache GitHub.
-* **V9.0:** Triển khai Mutex chống trùng lặp, Telegram Report mã hóa AES, Aggressive Mode.
+* **V10:** Tự động hiển thị Version trên Telegram, sửa lỗi tải file update.
+* **V9.1:** Thêm tính năng tự động tải code từ GitHub.
+* **V9.0:** Thêm báo cáo Telegram, chống chạy trùng script, thêm tính năng dọn mạnh tay (Aggressive Mode).
