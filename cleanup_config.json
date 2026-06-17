@@ -8,8 +8,8 @@
     "AggressiveFreeGB": 5
   },
   "Days": {
-    "Temp": 15,
-    "Downloads": 30
+    "Temp": 20,
+    "Downloads": 300
   },
   "Paths": {
     "Zalo": ["AppData\\Local\\ZaloPC", "AppData\\Roaming\\ZaloData"]
@@ -18,7 +18,7 @@
   "JunkFolders": ["Cache", "temp", "Thumbnails", "ChatFiles", "media"],
   "ExcludeUsers": ["Public", "Default", "Default User", "All Users", "CEO", "Manager"],
   "Options": {
-    "DryRun": true,
+    "DryRun": false,
     "UseRecycleBin": true,
     "CleanWindowsUpdate": true,
     "NotifyUser": true
