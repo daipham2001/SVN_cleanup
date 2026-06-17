@@ -2,9 +2,9 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 10
+$CurrentVersion = 11
 # ===========================================================
-#  SAVANI IT CLEANUP V9.1 FINAL - Production Ready
+#  SAVANI IT CLEANUP V11 FINAL - Production Ready
 #  100 chi nhanh ban hang - Offline Ready
 # ===========================================================
 
@@ -382,19 +382,25 @@ try {
         Send-ErrorAlert $_.Exception.Message "USER-PROFILES"
     }
 
-    # -- 4. RECYCLE BIN --------------------------------------
+    # -- 4. RECYCLE BIN (Chi xoa rac tren 30 ngay) -----------
     try {
         $rbSizeBefore = [long]0
         $rbCount      = 0
+        $limitRB      = (Get-Date).AddDays(-30) # Chot cung 30 ngay
 
         $sa = New-Object -ComObject Shell.Application
         $rb = $sa.Namespace(0x0a)
         if ($null -ne $rb) {
             foreach ($item in $rb.Items()) {
+                if ($global:timeoutHit) { break }
                 try {
-                    if ($item.ModifyDate -lt $limitTemp) {
+                    if ($item.ModifyDate -lt $limitRB) {
                         $rbSizeBefore += $item.Size
                         $rbCount++
+                        if (-not $config.Options.DryRun) {
+                            # Xoa tung item da qua 30 ngay, giu lai file moi xoa
+                            Remove-Item -LiteralPath "\\?\$($item.Path)" -Force -Recurse -ErrorAction SilentlyContinue
+                        }
                     }
                 } catch { }
             }
@@ -405,11 +411,8 @@ try {
         $global:globalDeletedSize += $rbSizeBefore
 
         $rbMB = [math]::Round($rbSizeBefore / 1MB, 2)
-        if ($rbCount -gt 0) { Write-Log "    |-- Recycle Bin: $rbCount item (~$rbMB MB)" }
-
-        if (-not $config.Options.DryRun -and $rbCount -gt 0) {
-            Clear-RecycleBin -Force -ErrorAction SilentlyContinue
-            Write-Log "Recycle Bin: Da xoa $rbCount item."
+        if ($rbCount -gt 0) { 
+            Write-Log "    |-- Recycle Bin: $rbCount item (>30 ngay, ~$rbMB MB)" 
         }
     } catch {
         Write-Log "Loi Recycle Bin: $($_.Exception.Message)" "WARN"
