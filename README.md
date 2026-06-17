@@ -1,54 +1,84 @@
-# SAVANI IT - Script Dọn Rác Tự Động
+# SAVANI IT - Script Dọn Rác & Tối Ưu Hệ Thống Tự Động (Bản V11)
 
-Công cụ dọn rác ngầm cho các máy POS tại chi nhánh. Chạy rất nhẹ, tự động cập nhật và báo cáo qua Telegram.
+Công cụ quản lý và dọn dẹp rác hệ thống chạy ngầm dành riêng cho các máy POS tại chi nhánh SAVANI. Script được thiết kế theo mô hình **Zero-Agent**, tự động tối ưu hiệu năng, tự động cập nhật qua GitHub và báo cáo trạng thái trực tiếp về Telegram của phòng IT.
 
 ## 🚀 Chức năng chính
 
-* **Dọn rác:** Tự động xóa file rác Zalo (ảnh/video/cache cũ), thư mục Temp và thư mục Downloads.
-* **Tránh treo máy:** Tự động tắt neesy chạy quá lâu
-* **Cứu hộ ổ C:** Tự động dọn mạnh tay hơn (xóa nhiều file hơn) nếu phát hiện ổ C sắp đầy.
-* **Báo cáo Telegram:** Dọn xong tự động bắn tin nhắn báo cáo về group IT.
-* **Tự động cập nhật:** Có code mới trên mạng là máy CN tự tải về, ko cần cập nhật tay từng máy
+* **Dọn rác Zalo chuyên sâu:** Quét và xóa các thư mục rác chỉ định của Zalo (Cache, Temp, Thumbnails, Media cũ) theo số ngày cấu hình. Đảm bảo **KHÔNG** làm mất lịch sử tin nhắn văn bản của thu ngân.
+* **Xử lý Temp & Downloads thông minh:** * Xóa toàn bộ file tạm của Windows (`System Temp` và `User AppData Temp`).
+  * Quét thư mục `Downloads`, tự động bỏ qua (miễn tử) các định dạng file làm việc quan trọng như `.pdf`, `.xls`, `.xlsx`, `.docx`, `.txt`, `.rar`, `.zip`.
+* **Dọn Thùng rác có chọn lọc (Mới ở V11):** Không xóa trắng Thùng rác ngay lập tức. Hệ thống chỉ tìm và tiêu hủy vĩnh viễn các file đã nằm trong Thùng rác **quá 30 ngày** (tính từ ngày sửa đổi cuối), chừa đường lui cho nhân viên nếu lỡ tay xóa nhầm file mới.
+* **Cơ chế Cấp cứu (Aggressive Mode):** Khi ổ C rơi vào trạng thái báo động đỏ (dung lượng trống thấp hơn mức cấu hình), hệ thống tự động ép ngưỡng thời gian giữ file xuống còn **1/3** để giải phóng dung lượng tối đa ngay lập tức.
+* **Bảo vệ hiệu năng POS:**
+  * **Mutex Lock:** Chống chạy trùng (chỉ cho phép duy nhất 1 tiến trình script chạy tại một thời điểm).
+  * **Timeout Control:** Giới hạn thời gian chạy tối đa **10 phút**. Nếu quá thời gian, script tự ngắt để không làm ảnh hưởng đến tài nguyên máy bán hàng.
+  * **Giãn cách tiến trình:** Cứ xóa 50 file hệ thống sẽ nghỉ 10ms để tránh tình trạng nghẽn Đĩa (Disk 100%).
+* **Báo cáo thời gian thực:** Gửi thông báo chi tiết (dung lượng đã xóa từng mục, dung lượng ổ đĩa hiện tại, cảnh báo lỗi...) về Group Telegram của IT.
 
-## 📂 Thư mục chứa File (`C:\IT_Scripts`)
+## 📂 Cấu trúc thư mục triển khai (`C:\IT_Scripts`)
 
-| File | Tác dụng |
-| :--- | :--- |
-| `Savani_AutoCleanup.ps1` | Kịch bản chạy chính. |
-| `cleanup_config.json` | File cấu hình (chỉnh ngày, dung lượng...). |
-| `Cleanup_Log.txt` | File log ghi lại lịch sử dọn rác. |
-| `.tg_token.enc` | File chứa mã Token Telegram đã được bảo mật. |
+| Tên File / Thư mục | Loại | Tác dụng |
+| :--- | :--- | :--- |
+| `SavaniCleanup_v9.ps1` | File Script | Kịch bản xử lý chính bằng PowerShell. |
+| `cleanup_config.json` | File Cấu hình | Chứa toàn bộ tham số điều khiển (ngày dọn, tài khoản loại trừ, ChatID...). |
+| `Cleanup_Log.txt` | File Nhật ký | Ghi lại lịch sử chạy chi tiết. Tự động đổi tên thành `_old.txt` khi vượt quá 5MB. |
+| `.tg_token.enc` | File Mã hóa | Chứa mã Token Telegram của Bot phòng IT đã mã hóa bằng chuẩn AES-256. |
 
-## ⚙️ Hướng dẫn file Config (`cleanup_config.json`)
+## ⚙️ Giải nghĩa chi tiết file Config (`cleanup_config.json`)
 
-Chỉ cần sửa số ở file này để thay đổi cách dọn rác, không cần sửa code:
+Admin có thể cấu hình file JSON trên GitHub để điều khiển hành vi của toàn bộ máy POS từ xa:
 
-* **`DryRun`**: Để `true` là chạy thử (chỉ quét, không xóa), để `false` là chạy xóa thật.
-* **`MinFreeGBToRun`** (VD: 50): Ổ C trống trên 50GB thì máy đang ngon, bỏ qua không dọn nữa.
-* **`AggressiveFreeGB`** (VD: 10): Ổ C trống dưới 10GB thì kích hoạt chế độ "Cấp cứu" (Giảm số ngày giữ file xuống để cứu ổ cứng ngay lập tức).
-* **`Days`**: Số ngày giữ lại file cũ trong mục Temp và Downloads. Quá ngày là bị xóa.
-* **`ExcludeUsers`**: Các tài khoản Windows tuyệt đối không quét rác (VD: Administrator).
-* **`JunkFolders`**: Chỗ khai báo rác Zalo. Lưu ý: Tool chỉ xóa cache, media cũ, tuyệt đối không làm mất tin nhắn.
-* **`SafeExtensions`**: File tải về có các đuôi này (như `.pdf`, `.xls`, `.docx`...) sẽ ĐƯỢC GIỮ LẠI, không bị xóa.
-* **`Telegram`**: Bật/tắt gửi tin nhắn và điền ID nhóm chat.
+### 1. Khối `Telegram`
+* `"Enabled": true`: Cho phép bật tính năng bắn báo cáo về Telegram (đặt `false` để tắt).
+* `"ChatID": "-5209519013"`: ID Group Telegram nhận báo cáo dọn dẹp hoặc cảnh báo lỗi.
 
-## 🛠 Cách cài đặt lần đầu (Dành cho Helpdesk)
+### 2. Khối `Threshold`
+* `"MinFreeGBToRun": 100`: Nếu ổ C còn trống **nhiều hơn 100GB**, script sẽ tự động thoát (vì máy đang rất rộng rãi, không cần dọn).
+* `"AggressiveFreeGB": 5`: Ngưỡng kích hoạt chế độ "Cấp cứu". Ổ C dưới 5GB sẽ bị ép xóa mạnh tay hơn.
 
-1. Copy gói cài đặt vào máy POS chi nhánh.
-2. Chuột phải vào file cài đặt `.bat` -> Chọn **Run as Administrator**.
-3. Dán mã Token Telegram vào màn hình đen khi được hỏi.
-4. Xong! Tool sẽ tự tạo Task Scheduler chạy ngầm 2 phút sau khi thu ngân mở máy.
+### 3. Khối `Days`
+* `"Temp": 15`: Số ngày giữ lại file tạm và rác Zalo. File cũ hơn 15 ngày sẽ bị xóa.
+* `"Downloads": 30`: Số ngày giữ lại file trong thư mục Downloads (chỉ áp dụng với file không thuộc danh sách an toàn).
 
-## 🔄 Cách Update bản mới (Dành cho Admin)
+### 4. Khối `Paths` & Định dạng
+* `"Zalo"`: Đường dẫn trỏ tới thư mục dữ liệu Zalo trong User Profile (`AppData\Local\ZaloPC`, `AppData\Roaming\ZaloData`).
+* `"SafeExtensions"`: Danh sách đuôi file tuyệt đối **KHÔNG XÓA** trong thư mục Downloads (Ví dụ: `.xlsx`, `.pdf`...).
+* `"JunkFolders"`: Tên các thư mục rác mục tiêu của Zalo (`Cache`, `temp`, `Thumbnails`, `ChatFiles`, `media`).
+* `"ExcludeUsers"`: Danh sách tài khoản Windows được bỏ qua, không quét rác (Ví dụ: `CEO`, `Manager`, `Public`...).
 
-Khi cần sửa code hoặc thêm tính năng cho 100+ máy:
-1. Mở file `SavaniCleanup_v9.ps1` trên GitHub này để sửa code.
-2. Sửa tăng con số ở dòng `$CurrentVersion` (VD: từ `9.1` lên `9.2`).
-3. Lưu lại (Commit changes).
-4. Các máy POS sẽ tự động tải bản mới về chạy ở lần tiếp theo.
+### 5. Khối `Options` (Mở rộng nâng cao)
+* `"DryRun": false`: Đặt `true` để chạy mô phỏng (chỉ quét đếm dung lượng, không xóa file thật). Đặt `false` để chạy thực tế.
+* `"UseRecycleBin": true`: Đặt `true` để ném file rác vào Thùng rác trước, đặt `false` để hủy vĩnh viễn (Shift+Delete).
+* `"CleanWindowsUpdate": true`: Cho phép quét dọn thư mục cache tải về của Windows Update (`SoftwareDistribution\Download`).
+* `"NotifyUser": true`: Bật cửa sổ thông báo (Popup) báo thành công cho nhân viên chi nhánh sau khi dọn xong.
 
-## 📝 Lịch sử cập nhật
+## 🛠 Hướng dẫn triển khai dành cho Helpdesk
 
-* **V10:** Tự động hiển thị Version trên Telegram, sửa lỗi tải file update.
-* **V9.1:** Thêm tính năng tự động tải code từ GitHub.
-* **V9.0:** Thêm báo cáo Telegram, chống chạy trùng script, thêm tính năng dọn mạnh tay (Aggressive Mode).
+### Cách 1: Triển khai tự động chạy ngầm (Task Scheduler)
+1. Tạo thư mục `C:\IT_Scripts` trên máy POS.
+2. Copy file code `.ps1`, file cấu hình `.json` và file mã hóa `.enc` vào thư mục.
+3. Tạo một Task Scheduler cấu hình chạy với quyền `Highest Privileges`, kích hoạt sau khi User đăng nhập Windows hoặc chạy định kỳ hàng tuần.
+
+### Cách 2: Gửi file hỗ trợ nhanh cho Chi nhánh (1-Click)
+1. Gửi file `Don_Rac_Savani.bat` (đã điền sẵn Token của IT) cho nhân viên chi nhánh qua Zalo.
+2. Hướng dẫn nhân viên click đúp vào file `.bat`.
+3. File `.bat` sẽ tự động tải bản code V11 và Config mới nhất từ GitHub về ổ C, tự chạy dọn dẹp và hiện Popup thông báo cho nhân viên khi hoàn thành.
+
+## 🔄 Quy trình cập nhật từ xa (Dành cho Admin)
+
+Hệ thống sử dụng cơ chế kiểm tra phiên bản tự động. Khi sếp muốn cập nhật tính năng hoặc đổi luật dọn rác cho tất cả các máy POS:
+1. Sửa code hoặc thông số file JSON trực tiếp trên Repository GitHub `SVN_cleanup_v2`.
+2. Trong file code `.ps1`, tìm biến `$CurrentVersion = 11` ở đầu file và **tăng số phiên bản lên** (Ví dụ: từ `11` lên `12`).
+3. Bấm **Commit changes** để lưu lại trên GitHub.
+4. Lần chạy kế tiếp của các máy POS (qua Task Scheduler hoặc khi nhân viên bấm file `.bat`), script cũ sẽ tự phát hiện có bản mới, tự động tải đè bản mới về và kích hoạt chạy thay thế.
+
+## 📝 Lịch sử phiên bản
+
+* **V11 (Hiện tại):** * Thay đổi cơ chế dọn Thùng rác: Chỉ xóa các file nằm trong Thùng rác quá 30 ngày, bảo vệ file mới xóa.
+  * Tối ưu thời gian ngắt tiến trình (Timeout) xuống tối đa 10 phút để an toàn cho hiệu năng hệ thống.
+* **V10:** Tự động đồng bộ và hiển thị thông tin Version chính xác lên báo cáo Telegram, sửa lỗi bắt regex phiên bản.
+* **V9.1:** Bổ sung Module Auto Update (Zero-Agent) tự động bốc code từ đám mây đám mây GitHub.
+* **V9.0:** Ra mắt kịch bản báo cáo Telegram, cấu hình qua JSON, cơ chế phòng chống chạy trùng (Mutex) và chế độ Cấp cứu (Aggressive Mode).
+
+---
+**Savani Operations - Tự động hóa để bứt phá**
