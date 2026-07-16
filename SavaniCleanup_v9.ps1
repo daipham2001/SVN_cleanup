@@ -2,7 +2,7 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 11
+$CurrentVersion = 12
 # ===========================================================
 #  SAVANI IT CLEANUP V11 FINAL - Production Ready
 #  100 chi nhanh ban hang - Offline Ready
