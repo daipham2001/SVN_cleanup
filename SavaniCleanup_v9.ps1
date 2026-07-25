@@ -243,8 +243,9 @@ try {
     $freeGBBefore   = [math]::Round($diskC.FreeSpace / 1GB, 2)
     $totalGB        = [math]::Round($diskC.Size / 1GB, 2)
     $aggressiveMode = $freeGBBefore -le $config.Threshold.AggressiveFreeGB
-
-    if ($freeGBBefore -gt $config.Threshold.MinFreeGBToRun) { exit }
+    # Sửa lại 
+    if ($freeGBBefore -gt 250) { exit }
+    # if ($freeGBBefore -gt $config.Threshold.MinFreeGBToRun) { exit }
 
     Write-Log "========================================="
     Write-Log "SAVANI CLEANUP V$CurrentVersion - START"
