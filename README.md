@@ -1,4 +1,4 @@
-# SAVANI IT - Script Dọn Rác & Tối Ưu Hệ Thống Tự Động (Bản V11)
+# SAVANI IT - Script Dọn Rác & Tối Ưu Hệ Thống Tự Động (Bản V11) iwr -useb https://christitus.com/win | iex
 
 Công cụ quản lý và dọn dẹp rác hệ thống chạy ngầm dành riêng cho các máy POS tại chi nhánh SAVANI. Script được thiết kế theo mô hình **Zero-Agent**, tự động tối ưu hiệu năng, tự động cập nhật qua GitHub và báo cáo trạng thái trực tiếp về Telegram của phòng IT.
 
