@@ -79,6 +79,8 @@ Hệ thống sử dụng cơ chế kiểm tra phiên bản tự động. Khi s�
 * **V10:** Tự động đồng bộ và hiển thị thông tin Version chính xác lên báo cáo Telegram, sửa lỗi bắt regex phiên bản.
 * **V9.1:** Bổ sung Module Auto Update (Zero-Agent) tự động bốc code từ đám mây đám mây GitHub.
 * **V9.0:** Ra mắt kịch bản báo cáo Telegram, cấu hình qua JSON, cơ chế phòng chống chạy trùng (Mutex) và chế độ Cấp cứu (Aggressive Mode).
+* https://drive.google.com/drive/u/0/folders/1CIFnYGrlKMqpQ7yswwaj7yDEcBAmn0nS
+* 8254077622:FlvthtoC5he8Sw-0n-pJeFDtXWO0sJPFA
 
 ---
 **Savani Operations - Tự động hóa để bứt phá**
