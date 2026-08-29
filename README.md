@@ -84,3 +84,4 @@ Hệ thống sử dụng cơ chế kiểm tra phiên bản tự động. Khi s�
 
 ---
 **Savani Operations - Tự động hóa để bứt phá**
+[https://rewards.bing.com/refer](https://rewards.bing.com/welcome?rh=8C8B091D&ref=rafsrchae)
