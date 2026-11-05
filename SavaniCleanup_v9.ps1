@@ -2,10 +2,10 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 13
+$CurrentVersion = 14
 # ===========================================================
-#  SAVANI IT CLEANUP V11 FINAL - Production Ready
-#  100 chi nhanh ban hang - Offline Ready
+#  SAVANI IT CLEANUP V13 FINAL - Production Ready
+#  - Tich hop Auto-Update Script (.ps1) + Config (.json)
 # ===========================================================
 
 # -- 0. LOG ROTATION -----------------------------------------
@@ -28,10 +28,9 @@ $mutex = New-Object System.Threading.Mutex($false, $mutexName)
 if (-not $mutex.WaitOne(0, $false)) { exit }
 
 $scriptStartTime = [DateTime]::Now
-$timeoutMinutes  = 10  # Giam tu 25 xuong 10 phut de bao ve gio lam viec
+$timeoutMinutes  = 10
 
-# -- HAM TIEN ICH (DI CHUYEN LEN TRUOC) ----------------------
-
+# -- HAM TIEN ICH --------------------------------------------
 function Write-Log {
     param([string]$msg, [string]$level = "INFO")
     $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')][$level] $msg"
@@ -59,18 +58,18 @@ function Get-FolderSize {
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Add-Type -AssemblyName Microsoft.VisualBasic
+
     # =========================================================
     # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
     # =========================================================
     $UpdateUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2RhaXBoYW0yMDAxL1NWTl9jbGVhbnVwL21haW4vU2F2YW5pQ2xlYW51cF92OS5wczE="))
+    $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/cleanup_config.json"
     
     try {
         Write-Log "AUTO-UPDATE: Bat dau kiem tra phien ban moi..."
-        
         $cacheBuster = [guid]::NewGuid().ToString()
         $fetchUrl = "$($UpdateUrl.Trim())?t=$cacheBuster"
 
-        # Đâm thẳng vào tải code. Nếu rớt mạng tự nó nhảy xuống catch, không cần test mạng!
         $resp = Invoke-WebRequest -Uri $fetchUrl -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
         $remoteScript = $resp.Content
 
@@ -80,17 +79,26 @@ try {
             if ($remoteVersion -gt $CurrentVersion) {
                 Write-Log "AUTO-UPDATE: Co ban moi V$remoteVersion (Hien tai: V$CurrentVersion). Dang cap nhat..."
 
-                # Fix triệt để vụ file tàng hình của Task Scheduler
+                # 1. Cap nhat Script .ps1
                 $scriptPath = $PSCommandPath
                 if ([string]::IsNullOrEmpty($scriptPath)) { 
                     $scriptPath = "C:\IT_Scripts\SavaniCleanup_v9.ps1" 
                 }
-
                 $remoteScript | Out-File -FilePath $scriptPath -Encoding utf8 -Force
-                Write-Log "AUTO-UPDATE: Ghi de thanh cong. Dang reboot kich ban..."
+                Write-Log "AUTO-UPDATE: Ghi de Script PS1 thanh cong."
+
+                # 2. Cap nhat Config .json
+                try {
+                    $jsonBuster = "$JsonUrl?t=" + [guid]::NewGuid().ToString()
+                    Invoke-WebRequest -Uri $jsonBuster -OutFile $ConfigPath -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+                    Write-Log "AUTO-UPDATE: Ghi de Config JSON thanh cong."
+                } catch {
+                    Write-Log "AUTO-UPDATE: Loi khi tai Config JSON - $($_.Exception.Message)" "WARN"
+                }
 
                 if ($null -ne $mutex) { try { $mutex.ReleaseMutex() } catch { } $mutex.Dispose() }
 
+                Write-Log "AUTO-UPDATE: Dang reboot kich ban..."
                 Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -NonInteractive -File `"$scriptPath`""
                 exit
             } else {
@@ -123,7 +131,6 @@ try {
             Write-Log "Loi giai ma Token: $($_.Exception.Message)" "ERROR"
         }
     }
-
 
     # -- BIEN TONG HOP ----------------------------------------
     $globalDeletedSize   = [long]0
@@ -192,7 +199,6 @@ try {
         $retryCount = 0
         $connected  = $false
 
-        # Test ket noi bang HTTP thay vi ping (tranh bi chan ICMP)
         while (-not $connected -and $retryCount -lt $maxRetries) {
             try {
                 Invoke-WebRequest -Uri "https://api.telegram.org" -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop | Out-Null
@@ -243,9 +249,9 @@ try {
     $freeGBBefore   = [math]::Round($diskC.FreeSpace / 1GB, 2)
     $totalGB        = [math]::Round($diskC.Size / 1GB, 2)
     $aggressiveMode = $freeGBBefore -le $config.Threshold.AggressiveFreeGB
-    # Sửa lại 
-    if ($freeGBBefore -gt 250) { exit }
-    # if ($freeGBBefore -gt $config.Threshold.MinFreeGBToRun) { exit }
+
+    # SUA LAI DIEU KIEN THOAT THEO CONFIG
+    if ($freeGBBefore -gt $config.Threshold.MinFreeGBToRun) { exit }
 
     Write-Log "========================================="
     Write-Log "SAVANI CLEANUP V$CurrentVersion - START"
@@ -258,7 +264,6 @@ try {
     Write-Log "STATUS: $globalStatus"
     Write-Log "========================================="
 
-    # Tinh nguong ngay theo mode
     if ($aggressiveMode) {
         $daysTemp = [math]::Max(1, [int]($config.Days.Temp      / 3))
         $daysDown = [math]::Max(3, [int]($config.Days.Downloads / 3))
@@ -383,11 +388,11 @@ try {
         Send-ErrorAlert $_.Exception.Message "USER-PROFILES"
     }
 
-    # -- 4. RECYCLE BIN (Chi xoa rac tren 30 ngay) -----------
+    # -- 4. RECYCLE BIN --------------------------------------
     try {
         $rbSizeBefore = [long]0
         $rbCount      = 0
-        $limitRB      = (Get-Date).AddDays(-30) # Chot cung 30 ngay
+        $limitRB      = (Get-Date).AddDays(-30)
 
         $sa = New-Object -ComObject Shell.Application
         $rb = $sa.Namespace(0x0a)
@@ -399,7 +404,6 @@ try {
                         $rbSizeBefore += $item.Size
                         $rbCount++
                         if (-not $config.Options.DryRun) {
-                            # Xoa tung item da qua 30 ngay, giu lai file moi xoa
                             Remove-Item -LiteralPath "\\?\$($item.Path)" -Force -Recurse -ErrorAction SilentlyContinue
                         }
                     }
@@ -475,7 +479,6 @@ try {
             Invoke-RestMethod -Uri $url -Method Post -Body $body -TimeoutSec 20 -ErrorAction SilentlyContinue | Out-Null
         }
     } catch { }
-
 } finally {
     if ($null -ne $mutex) {
         try { $mutex.ReleaseMutex() } catch { }
