@@ -4,7 +4,7 @@
     "ChatID": "-5209519013"
   },
   "Threshold": {
-    "MinFreeGBToRun": 50,
+    "MinFreeGBToRun": 100,
     "AggressiveFreeGB": 0
   },
   "Days": {
