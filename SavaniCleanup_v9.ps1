@@ -2,9 +2,9 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 14
+$CurrentVersion = 15
 # ===========================================================
-#  SAVANI IT CLEANUP V13 FINAL - Production Ready
+#  SAVANI IT CLEANUP V15 FINAL - Production Ready
 #  - Tich hop Auto-Update Script (.ps1) + Config (.json)
 # ===========================================================
 
@@ -55,6 +55,7 @@ function Get-FolderSize {
     return [long]$s.Sum
 }
 
+# ===> BA DÒNG QUAN TRỌNG ĐÃ ĐƯỢC THÊM LẠI VÀO ĐÂY <===
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Add-Type -AssemblyName Microsoft.VisualBasic
@@ -66,7 +67,18 @@ try {
     $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/cleanup_config.json"
     
     try {
-        Write-Log "AUTO-UPDATE: Bat dau kiem tra phien ban moi..."
+        Write-Log "AUTO-UPDATE: Bat dau dong bo he thong..."
+        
+        # 1. LUÔN LUÔN KÉO FILE JSON VỀ TRƯỚC TIÊN (Bất chấp phiên bản PS1 là gì)
+        try {
+            $jsonBuster = "$JsonUrl?t=" + [guid]::NewGuid().ToString()
+            Invoke-WebRequest -Uri $jsonBuster -OutFile $ConfigPath -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+            Write-Log "AUTO-UPDATE: Dong bo Config JSON tu Cloud thanh cong."
+        } catch {
+            Write-Log "AUTO-UPDATE: Loi tai Config JSON (Dung file cu tren may) - $($_.Exception.Message)" "WARN"
+        }
+
+        # 2. SAU ĐÓ MỚI CHECK ĐỂ CẬP NHẬT SCRIPT PS1
         $cacheBuster = [guid]::NewGuid().ToString()
         $fetchUrl = "$($UpdateUrl.Trim())?t=$cacheBuster"
 
@@ -77,9 +89,8 @@ try {
             $remoteVersion = [double]$matches[1]
 
             if ($remoteVersion -gt $CurrentVersion) {
-                Write-Log "AUTO-UPDATE: Co ban moi V$remoteVersion (Hien tai: V$CurrentVersion). Dang cap nhat..."
+                Write-Log "AUTO-UPDATE: Co ban code moi V$remoteVersion (Hien tai: V$CurrentVersion). Dang cap nhat..."
 
-                # 1. Cap nhat Script .ps1
                 $scriptPath = $PSCommandPath
                 if ([string]::IsNullOrEmpty($scriptPath)) { 
                     $scriptPath = "C:\IT_Scripts\SavaniCleanup_v9.ps1" 
@@ -87,28 +98,17 @@ try {
                 $remoteScript | Out-File -FilePath $scriptPath -Encoding utf8 -Force
                 Write-Log "AUTO-UPDATE: Ghi de Script PS1 thanh cong."
 
-                # 2. Cap nhat Config .json
-                try {
-                    $jsonBuster = "$JsonUrl?t=" + [guid]::NewGuid().ToString()
-                    Invoke-WebRequest -Uri $jsonBuster -OutFile $ConfigPath -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
-                    Write-Log "AUTO-UPDATE: Ghi de Config JSON thanh cong."
-                } catch {
-                    Write-Log "AUTO-UPDATE: Loi khi tai Config JSON - $($_.Exception.Message)" "WARN"
-                }
-
                 if ($null -ne $mutex) { try { $mutex.ReleaseMutex() } catch { } $mutex.Dispose() }
 
                 Write-Log "AUTO-UPDATE: Dang reboot kich ban..."
                 Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -NonInteractive -File `"$scriptPath`""
                 exit
             } else {
-                Write-Log "AUTO-UPDATE: Dang dung ban moi nhat (V$CurrentVersion)."
+                Write-Log "AUTO-UPDATE: Code PS1 dang la ban moi nhat (V$CurrentVersion)."
             }
-        } else {
-            Write-Log "AUTO-UPDATE: Khong tim thay bien CurrentVersion tren GitHub" "WARN"
         }
     } catch {
-        Write-Log "AUTO-UPDATE Bo qua (Loi mang/Link): $($_.Exception.Message)" "WARN"
+        Write-Log "AUTO-UPDATE Loi check Code: $($_.Exception.Message)" "WARN"
     }
     # =========================================================
     # =========================================================
