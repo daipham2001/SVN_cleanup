@@ -2,9 +2,9 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
-$CurrentVersion = 15
+$CurrentVersion = 16
 # ===========================================================
-#  SAVANI IT CLEANUP V15 FINAL - Production Ready
+#  SAVANI IT CLEANUP V16 FINAL - Production Ready
 #  - Tich hop Auto-Update Script (.ps1) + Config (.json)
 # ===========================================================
 
@@ -64,7 +64,8 @@ try {
     # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
     # =========================================================
     $UpdateUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2RhaXBoYW0yMDAxL1NWTl9jbGVhbnVwL21haW4vU2F2YW5pQ2xlYW51cF92OS5wczE="))
-    $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/main/cleanup_config.json"
+    $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/refs/heads/main/cleanup_config.json"
+    
     
     try {
         Write-Log "AUTO-UPDATE: Bat dau dong bo he thong..."
