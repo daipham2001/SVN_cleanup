@@ -2,6 +2,7 @@ param(
     [string]$ConfigPath = "C:\IT_Scripts\cleanup_config.json",
     [string]$LogFile    = "C:\IT_Scripts\Cleanup_Log.txt"
 )
+# ĐÃ SỬA THÀNH 16
 $CurrentVersion = 16
 # ===========================================================
 #  SAVANI IT CLEANUP V16 FINAL - Production Ready
@@ -55,7 +56,6 @@ function Get-FolderSize {
     return [long]$s.Sum
 }
 
-# ===> BA DÒNG QUAN TRỌNG ĐÃ ĐƯỢC THÊM LẠI VÀO ĐÂY <===
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Add-Type -AssemblyName Microsoft.VisualBasic
@@ -64,15 +64,17 @@ try {
     # --- MODULE AUTO UPDATE (ZERO-AGENT) ---
     # =========================================================
     $UpdateUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2RhaXBoYW0yMDAxL1NWTl9jbGVhbnVwL21haW4vU2F2YW5pQ2xlYW51cF92OS5wczE="))
-    $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/refs/heads/main/cleanup_config.json"
     
+    # ĐÃ SỬA THÀNH LINK CHUẨN MỚI
+    $JsonUrl   = "https://raw.githubusercontent.com/daipham2001/SVN_cleanup/refs/heads/main/cleanup_config.json"
     
     try {
         Write-Log "AUTO-UPDATE: Bat dau dong bo he thong..."
         
         # 1. LUÔN LUÔN KÉO FILE JSON VỀ TRƯỚC TIÊN (Bất chấp phiên bản PS1 là gì)
         try {
-            $jsonBuster = "$JsonUrl?t=" + [guid]::NewGuid().ToString()
+            # ĐÃ KẸP THÊM BÙA .Trim()
+            $jsonBuster = "$($JsonUrl.Trim())?t=" + [guid]::NewGuid().ToString()
             Invoke-WebRequest -Uri $jsonBuster -OutFile $ConfigPath -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
             Write-Log "AUTO-UPDATE: Dong bo Config JSON tu Cloud thanh cong."
         } catch {
