@@ -15,10 +15,10 @@
     "Zalo": ["AppData\\Local\\ZaloPC", "AppData\\Roaming\\ZaloData"]
   },
   "SafeExtensions": [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".rar", ".zip"],
-  "JunkFolders": ["Cache", "temp", "Thumbnails", "ChatFiles", "media"],
+  "JunkFolders": ["Cache", "temp", "Thumbnails", "ChatFiles", "media", "ZaloDownloads"],
   "ExcludeUsers": ["Public", "Default", "Default User", "All Users", "CEO", "Manager"],
   "Options": {
-    "DryRun": true,
+    "DryRun": false,
     "UseRecycleBin": true,
     "CleanWindowsUpdate": true,
     "NotifyUser": true
